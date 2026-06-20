@@ -1,0 +1,37 @@
+{
+  "admin": {
+    "password": "8d9db4814cb09b5ffe25bf58269e4c7523030e15999d514d2f9118ed82868805",
+    "role": "Admin",
+    "created": "09 Jun 2026",
+    "active": true
+  },
+  "user1": {
+    "password": "a290a5a1512c2fea1f516e50bd0dcee4426fb4abd895a94ce6cf08ccd09e8a9d",
+    "role": "User",
+    "created": "09 Jun 2026",
+    "active": true,
+    "last_login": "09 Jun 2026 08:59",
+    "scan_count": 1
+  },
+  "analyst": {
+    "password": "1fb5e0cefbb4dfc360a423b7d19391a412012b12dde11b88e769d1e00551eee1",
+    "role": "Analyst",
+    "created": "09 Jun 2026",
+    "active": true,
+    "last_login": "09 Jun 2026 09:33"
+  },
+  "mahesh": {
+    "password": "c946f9b4d0bd5f9ac8616470b2df3e35e81628251b8c12bd910e07c5adc55c18",
+    "role": "Member",
+    "created": "09 Jun 2026",
+    "active": true
+  },
+  "mahesh511": {
+    "password": "298cf624356088a8a0e1b877471dad5e1135223a3443405f0f8309896a66b87a",
+    "role": "User",
+    "created": "09 Jun 2026 08:57",
+    "active": true,
+    "last_login": "Never",
+    "scan_count": 0
+  }
+}

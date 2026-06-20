@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXUS — Secure Access Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   ROOT & RESET
+════════════════════════════════════════════ */
+:root{
+  --bg:#07070e;--panel:#0e0e1a;--card:#141424;--border:#1e1e35;--border2:#282845;
+  --ac:#00c8ff;--ac2:#7b5cff;--ac3:#ff6b9d;--ac4:#00e676;
+  --t:#eeeeff;--m:#5a5a8a;--m2:#3a3a5a;--dim:#22223a;
+  --err:#ff4d6d;--warn:#ffb830;--ok:#00e676;
+  --r:10px;--r2:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);
+  min-height:100vh;overflow:hidden;display:flex;
+  align-items:center;justify-content:center;padding:16px;
+}
+
+/* ═══ ANIMATED BACKGROUND ═══ */
+.bg-layer{position:fixed;inset:0;z-index:0;overflow:hidden}
+.bg-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,200,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,200,255,.035) 1px,transparent 1px);
+  background-size:48px 48px;
+  animation:gridDrift 25s linear infinite;
+}
+@keyframes gridDrift{0%{transform:translate(0,0)}100%{transform:translate(48px,48px)}}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(90px);animation:orbFloat 10s ease-in-out infinite}
+.orb1{width:500px;height:500px;background:rgba(123,92,255,.1);top:-150px;left:-150px;animation-delay:0s}
+.orb2{width:350px;height:350px;background:rgba(0,200,255,.08);bottom:-100px;right:-100px;animation-delay:4s}
+.orb3{width:250px;height:250px;background:rgba(255,107,157,.07);top:40%;right:20%;animation-delay:7s}
+@keyframes orbFloat{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.1) translate(15px,-15px)}}
+
+/* ═══ MAIN CONTAINER ═══ */
+.container{
+  position:relative;z-index:1;width:100%;max-width:1000px;
+  display:flex;border-radius:20px;overflow:hidden;
+  box-shadow:0 50px 120px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.04);
+  animation:pageIn .7s cubic-bezier(.16,1,.3,1);
+}
+@keyframes pageIn{
+  from{opacity:0;transform:translateY(32px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* ═══ LEFT PANEL ═══ */
+.left{
+  flex:1;background:linear-gradient(155deg,#0a0a18 0%,#0c0c1e 40%,#07070f 100%);
+  padding:48px 44px;display:flex;flex-direction:column;
+  border-right:1px solid var(--border);position:relative;overflow:hidden;
+}
+/* Glowing line on right edge */
+.left::after{
+  content:'';position:absolute;top:10%;right:0;width:1px;height:80%;
+  background:linear-gradient(180deg,transparent,var(--ac),var(--ac2),var(--ac3),transparent);
+  opacity:.25;
+}
+/* NEXUS Logo */
+.nexus-logo{display:flex;align-items:center;gap:14px;margin-bottom:32px}
+.logo-hex{
+  width:48px;height:48px;
+  background:linear-gradient(135deg,var(--ac2),var(--ac));
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;box-shadow:0 0 30px rgba(0,200,255,.3);
+  animation:hexPulse 3s ease-in-out infinite;
+}
+@keyframes hexPulse{0%,100%{box-shadow:0 0 20px rgba(0,200,255,.3)}50%{box-shadow:0 0 40px rgba(0,200,255,.5)}}
+.logo-words .name{font-size:26px;font-weight:900;letter-spacing:3px;line-height:1}
+.logo-words .name span{background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-words .sub{font-size:10px;color:var(--m);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+
+/* Feature list */
+.feat-list{flex:1;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.feat{display:flex;align-items:flex-start;gap:12px;padding:10px;border-radius:8px;transition:.2s;opacity:0;animation:featSlide .5s forwards}
+.feat:hover{background:rgba(255,255,255,.03)}
+@keyframes featSlide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.feat:nth-child(1){animation-delay:.15s}.feat:nth-child(2){animation-delay:.22s}
+.feat:nth-child(3){animation-delay:.29s}.feat:nth-child(4){animation-delay:.36s}
+.feat:nth-child(5){animation-delay:.43s}.feat:nth-child(6){animation-delay:.50s}
+.feat:nth-child(7){animation-delay:.57s}.feat:nth-child(8){animation-delay:.64s}
+.feat-badge{
+  width:32px;height:32px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  background:var(--dim);border:1px solid var(--border2);
+}
+.feat-info .ft{font-size:12px;font-weight:600;color:var(--t);margin-bottom:1px}
+.feat-info .fd{font-size:10px;color:var(--m);line-height:1.4}
+
+/* Bottom stats */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.sstat{text-align:center;padding:12px 8px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px}
+.sstat-n{font-size:18px;font-weight:800;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.sstat-l{font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;font-weight:600}
+
+/* ═══ RIGHT PANEL ═══ */
+.right{
+  width:420px;background:var(--panel);
+  display:flex;flex-direction:column;
+  padding:0;overflow:hidden;
+}
+
+/* Tab switcher */
+.tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab{
+  flex:1;padding:20px;text-align:center;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--m);
+  border-bottom:2px solid transparent;transition:.2s;
+  background:none;border-top:none;border-left:none;border-right:none;
+  font-family:'Inter',sans-serif;
+}
+.tab:hover{color:var(--t)}
+.tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+
+/* Form panels */
+.form-panel{display:none;padding:28px 32px 24px;flex-direction:column;flex:1}
+.form-panel.active{display:flex}
+
+.panel-head{margin-bottom:24px}
+.panel-head h2{font-size:20px;font-weight:800;margin-bottom:4px}
+.panel-head p{font-size:12px;color:var(--m);line-height:1.5}
+.sec-badge{
+  display:inline-flex;align-items:center;gap:5px;margin-top:8px;
+  font-size:10px;font-family:'JetBrains Mono',monospace;
+  color:var(--ok);background:rgba(0,230,118,.07);
+  border:1px solid rgba(0,230,118,.18);border-radius:4px;padding:3px 9px;
+}
+
+/* Alert box */
+.alert{
+  display:flex;align-items:flex-start;gap:10px;
+  border-radius:8px;padding:11px 14px;margin-bottom:18px;font-size:12px;
+}
+.alert.error{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);color:#ff9aac}
+.alert.success{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);color:#5dffa0}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+
+/* Field */
+.field{margin-bottom:16px}
+.field-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.field-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--m)}
+.field-hint{font-size:10px;color:var(--ac);cursor:pointer;transition:.15s}
+.field-hint:hover{opacity:.7}
+
+/* Input */
+.input-wrap{position:relative}
+.field-input{
+  width:100%;background:var(--card);border:1.5px solid var(--border2);
+  border-radius:var(--r);padding:12px 42px 12px 14px;
+  font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--t);
+  outline:none;transition:.2s;
+}
+.field-input::placeholder{color:var(--m2)}
+.field-input:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(0,200,255,.1)}
+.field-input.ok{border-color:rgba(0,230,118,.5)}
+.field-input.err{border-color:rgba(255,77,109,.5)}
+/* strength underline */
+.field-input:focus ~ .strength-bar{display:flex}
+
+/* Eye button */
+.eye-btn{
+  position:absolute;right:0;top:0;height:100%;width:42px;
+  background:none;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--m);transition:.2s;border-radius:0 var(--r) var(--r) 0;
+}
+.eye-btn:hover{color:var(--ac);background:rgba(0,200,255,.07)}
+.eye-btn svg{width:15px;height:15px;pointer-events:none}
+
+/* Timer bar */
+.timer-bar{height:2px;border-radius:1px;background:var(--dim);margin-top:5px;display:none;overflow:hidden}
+.timer-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.timer-text{font-size:10px;color:var(--ac);font-family:'JetBrains Mono',monospace;margin-top:3px;display:none}
+
+/* Password strength */
+.strength-row{display:none;align-items:center;gap:8px;margin-top:6px}
+.strength-segs{display:flex;gap:3px;flex:1}
+.seg{height:3px;border-radius:2px;flex:1;background:var(--dim);transition:.3s}
+.strength-lbl{font-size:10px;font-family:'JetBrains Mono',monospace;min-width:52px;text-align:right}
+.seg.weak{background:var(--err)}.seg.fair{background:var(--warn)}.seg.good{background:var(--ac)}.seg.strong{background:var(--ok)}
+
+/* Caps warn */
+.caps-warn{font-size:10px;color:var(--warn);display:none;margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+/* Password rules */
+.pw-rules{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-top:6px;display:none}
+.pw-rules.show{display:block}
+.rule{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--m);margin-bottom:5px}
+.rule:last-child{margin-bottom:0}
+.rule.pass{color:var(--ok)}.rule.fail{color:var(--m)}
+.rule-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* Submit button */
+.submit-btn{
+  width:100%;padding:14px;margin-top:4px;
+  background:linear-gradient(135deg,var(--ac2),var(--ac));
+  color:#fff;border:none;border-radius:var(--r);
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:.2s;letter-spacing:.3px;
+  position:relative;overflow:hidden;
+}
+.submit-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  transform:translateX(-100%);transition:.5s;
+}
+.submit-btn:hover::after{transform:translateX(100%)}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,200,255,.3)}
+.submit-btn:active{transform:translateY(0)}
+.submit-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-inner{display:flex;align-items:center;justify-content:center;gap:8px}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.div-line{flex:1;height:1px;background:var(--border)}
+.div-text{font-size:10px;color:var(--m);font-weight:600;letter-spacing:.5px}
+
+/* ═══ CREDENTIALS BOX ═══ */
+.creds-wrap{margin-top:16px}
+.creds-toggle-btn{
+  width:100%;background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r);padding:10px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;transition:.2s;font-family:'Inter',sans-serif;
+}
+.creds-toggle-btn:hover{border-color:var(--ac);background:rgba(0,200,255,.04)}
+.ctb-left{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--t)}
+.ctb-badge{font-size:9px;background:rgba(0,200,255,.12);border:1px solid rgba(0,200,255,.2);color:var(--ac);border-radius:4px;padding:1px 7px;font-family:'JetBrains Mono',monospace}
+.ctb-arrow{font-size:11px;color:var(--m);transition:.2s}
+.ctb-arrow.open{transform:rotate(180deg)}
+.creds-list{
+  background:var(--card);border:1px solid var(--border2);
+  border-top:none;border-radius:0 0 var(--r) var(--r);
+  overflow:hidden;max-height:0;transition:max-height .35s cubic-bezier(.4,0,.2,1);
+}
+.creds-list.open{max-height:320px}
+.cred-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:.15s;
+}
+.cred-item:last-child{border-bottom:none}
+.cred-item:hover{background:rgba(0,200,255,.05)}
+.ci-role{
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  padding:2px 7px;border-radius:4px;flex-shrink:0;font-family:'JetBrains Mono',monospace;
+}
+.ci-role.admin{background:rgba(255,107,157,.12);color:#ff9ac0;border:1px solid rgba(255,107,157,.2)}
+.ci-role.analyst{background:rgba(123,92,255,.12);color:#a88cff;border:1px solid rgba(123,92,255,.2)}
+.ci-role.user{background:rgba(0,200,255,.1);color:var(--ac);border:1px solid rgba(0,200,255,.15)}
+.ci-role.member{background:rgba(0,230,118,.1);color:var(--ok);border:1px solid rgba(0,230,118,.15)}
+.ci-info{flex:1;min-width:0}
+.ci-user{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--t)}
+.ci-pass{font-size:10px;color:var(--m);margin-top:1px;font-family:'JetBrains Mono',monospace}
+.ci-btn{
+  font-size:10px;font-weight:600;color:var(--ac2);
+  background:rgba(123,92,255,.1);border:1px solid rgba(123,92,255,.2);
+  border-radius:5px;padding:3px 9px;transition:.15s;white-space:nowrap;
+  flex-shrink:0;
+}
+.ci-btn:hover{background:rgba(123,92,255,.2);color:#c0a8ff}
+
+/* Security info bar */
+.security-bar{
+  padding:14px 32px;background:rgba(0,0,0,.3);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.sb-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--m);font-family:'JetBrains Mono',monospace}
+.sb-dot{width:5px;height:5px;border-radius:50%}
+.sb-dot.ok{background:var(--ok)}.sb-dot.ac{background:var(--ac)}.sb-dot.ac2{background:var(--ac2)}
+.sb-sep{width:1px;height:12px;background:var(--border);margin:0 4px}
+
+/* Change password section */
+.change-pw-section{margin-top:16px;display:none}
+.change-pw-section.show{display:block}
+.cpw-toggle{
+  font-size:11px;color:var(--m);cursor:pointer;text-decoration:underline;
+  text-decoration-color:var(--border2);transition:.15s;
+}
+.cpw-toggle:hover{color:var(--ac)}
+
+/* Private history notice */
+.privacy-note{
+  display:flex;align-items:flex-start;gap:8px;
+  background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.12);
+  border-radius:8px;padding:10px 12px;margin-bottom:16px;
+}
+.pn-icon{font-size:14px;flex-shrink:0}
+.pn-text{font-size:11px;color:#88aacc;line-height:1.5}
+.pn-text b{color:var(--ac)}
+
+@media(max-width:780px){
+  .container{flex-direction:column;max-width:460px}
+  .left{display:none}
+  .right{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-layer">
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+  <div class="bg-orb orb3"></div>
+</div>
+
+<div class="container">
+
+  <!-- ══ LEFT PANEL ════════════════════════════════════ -->
+  <div class="left">
+    <div class="nexus-logo">
+      <div class="logo-hex">⬡</div>
+      <div class="logo-words">
+        <div class="name">NEX<span>US</span></div>
+        <div class="sub">Intelligence Platform</div>
+      </div>
+    </div>
+
+    <div class="feat-list">
+      <div class="feat"><div class="feat-badge">🔒</div><div class="feat-info"><div class="ft">Private Search History</div><div class="fd">Each user sees only their own scans — zero cross-access</div></div></div>
+      <div class="feat"><div class="feat-badge">🤖</div><div class="feat-info"><div class="ft">Selenium Real Browser</div><div class="fd">Scrapes JS-heavy sites — Amazon, Flipkart, Swiggy, etc.</div></div></div>
+      <div class="feat"><div class="feat-badge">📧</div><div class="feat-info"><div class="ft">Deep Contact Extraction</div><div class="fd">Emails via Hunter.io + page scraping + JSON-LD</div></div></div>
+      <div class="feat"><div class="feat-badge">🌐</div><div class="feat-info"><div class="ft">Multi-Source WHOIS</div><div class="fd">RDAP free + WhoisXML API + System whois command</div></div></div>
+      <div class="feat"><div class="feat-badge">🛡</div><div class="feat-info"><div class="ft">SSL + IP Intelligence</div><div class="fd">Certificate details, server location, ISP, timezone</div></div></div>
+      <div class="feat"><div class="feat-badge">⚙</div><div class="feat-info"><div class="ft">Tech Stack Detection</div><div class="fd">React, WordPress, Cloudflare, Analytics & 15+ more</div></div></div>
+      <div class="feat"><div class="feat-badge">🏆</div><div class="feat-info"><div class="ft">Competitor Intelligence</div><div class="fd">Category detection + top industry rivals auto-listed</div></div></div>
+      <div class="feat"><div class="feat-badge">👤</div><div class="feat-info"><div class="ft">Multi-User Accounts</div><div class="fd">Register any username/password — all data stays private</div></div></div>
+    </div>
+
+    <div class="stats-strip">
+      <div class="sstat"><div class="sstat-n">11+</div><div class="sstat-l">Scan Steps</div></div>
+      <div class="sstat"><div class="sstat-n">6</div><div class="sstat-l">APIs</div></div>
+      <div class="sstat"><div class="sstat-n">20+</div><div class="sstat-l">Data Points</div></div>
+      <div class="sstat"><div class="sstat-n">∞</div><div class="sstat-l">Users</div></div>
+    </div>
+  </div>
+
+  <!-- ══ RIGHT PANEL ═══════════════════════════════════ -->
+  <div class="right">
+
+    <!-- Tabs: Sign In / Sign Up -->
+    <div class="tabs">
+      <button class="tab active" id="tab-signin" onclick="switchTab('signin')">🔓 Sign In</button>
+      <button class="tab" id="tab-signup" onclick="switchTab('signup')">✨ Sign Up</button>
+    </div>
+
+    <!-- ══ SIGN IN FORM ══ -->
+    <div class="form-panel active" id="panel-signin">
+      <div class="panel-head">
+        <h2>Welcome Back</h2>
+        <p>Sign in to access your private dashboard<br>and search history.</p>
+        <div class="sec-badge">🔐 SHA-256 Salted Hashing</div>
+      </div>
+
+      <!-- Error / Success -->
+      {% if error %}
+      <div class="alert error"><div class="alert-icon">⚠</div><div>{{ error }}</div></div>
+      {% endif %}
+
+      <!-- Private history notice -->
+      <div class="privacy-note">
+        <div class="pn-icon">🔒</div>
+        <div class="pn-text">Your search history is <b>private</b> — only visible to you. Other users cannot see your scans.</div>
+      </div>
+
+      <form method="POST" action="/login" id="signinForm" onsubmit="return submitForm('signin')">
+        <input type="hidden" name="action" value="login">
+
+        <!-- Username -->
+        <div class="field">
+          <div class="field-top">
+            <label class="field-label">Username</label>
+            <span class="field-hint" id="si-uHint" style="display:none">✓ Valid</span>
+          </div>
+          <div class="input-wrap">
+            <input type="text" name="username" id="si-user"
+              class="field-input" placeholder="Enter your username"
+              autocomplete="username" oninput="siValidateUser()" required>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <div class="field-top">
+            <label class="field-label">Password</label>
+            <span class="caps-warn" id="si-caps">⇪ Caps Lock ON</span>
+          </div>
+          <div class="input-wrap">
+            <input type="password" name="password" id="si-pass"
+              class="field-input" placeholder="Enter your password"
+              autocomplete="current-password"
+              oninput="siValidatePass()"
+              onkeyup="checkCaps(event,'si-caps')" required>
+            <button type="button" class="eye-btn" onclick="toggleEye('si-pass','si-eye-open','si-eye-shut','si-timer','si-tbar','si-tcnt')">
+              <svg id="si-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="si-eye-shut" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="timer-bar" id="si-tbar"><div class="timer-fill" id="si-timer"></div></div>
+          <div class="timer-text" id="si-tcnt"></div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="si-btn">
+          <div class="btn-inner">
+            <div class="spin" id="si-spin"></div>
+            <span id="si-btxt">Sign In →</span>
+          </div>
+        </button>
+      </form>
+
+      <!-- Credentials quick-fill -->
+      <div class="creds-wrap">
+        <div class="creds-toggle-btn" onclick="toggleCreds('si')">
+          <div class="ctb-left">🔑 Quick Fill <span class="ctb-badge">4 accounts</span></div>
+          <div class="ctb-arrow" id="si-creds-arrow">▼</div>
+        </div>
+        <div class="creds-list" id="si-creds-list">
+          <div class="cred-item" onclick="fillCreds('si','admin','admin123')">
+            <div class="ci-role admin">Admin</div>
+            <div class="ci-info"><div class="ci-user">admin</div><div class="ci-pass">admin123</div></div>
+            <div class="ci-btn">Fill →</div>
+          </div>
+          <div class="cred-item" onclick="fillCreds('si','analyst','analyst2024')">
+            <div class="ci-role analyst">Analyst</div>
+            <div class="ci-info"><div class="ci-user">analyst</div><div class="ci-pass">analyst2024</div></div>
+            <div class="ci-btn">Fill →</div>
+          </div>
+          <div class="cred-item" onclick="fillCreds('si','user1','pass1234')">
+            <div class="ci-role user">User</div>
+            <div class="ci-info"><div class="ci-user">user1</div><div class="ci-pass">pass1234</div></div>
+            <div class="ci-btn">Fill →</div>
+          </div>
+          <div class="cred-item" onclick="fillCreds('si','mahesh','mahesh12345')">
+            <div class="ci-role member">Member</div>
+            <div class="ci-info"><div class="ci-user">mahesh</div><div class="ci-pass">mahesh12345</div></div>
+            <div class="ci-btn">Fill →</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /signin panel -->
+
+    <!-- ══ SIGN UP FORM ══ -->
+    <div class="form-panel" id="panel-signup">
+      <div class="panel-head">
+        <h2>Create Account</h2>
+        <p>Choose any username and password.<br>Your history will be 100% private.</p>
+        <div class="sec-badge">✨ Any username • Any password</div>
+      </div>
+
+      <div class="privacy-note">
+        <div class="pn-icon">🔒</div>
+        <div class="pn-text">After signup, your search history is <b>yours alone</b>. No admin can see your scans.</div>
+      </div>
+
+      <form method="POST" action="/login" id="signupForm" onsubmit="return submitForm('signup')">
+        <input type="hidden" name="action" value="register">
+
+        <!-- Username -->
+        <div class="field">
+          <div class="field-top">
+            <label class="field-label">Username</label>
+            <span class="field-hint" id="su-uHint" style="display:none">✓ Available</span>
+          </div>
+          <div class="input-wrap">
+            <input type="text" name="username" id="su-user"
+              class="field-input" placeholder="Choose a username (min 3 chars)"
+              autocomplete="username" oninput="suValidateUser()" required>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <div class="field-top">
+            <label class="field-label">Password</label>
+            <span class="caps-warn" id="su-caps">⇪ Caps Lock ON</span>
+          </div>
+          <div class="input-wrap">
+            <input type="password" name="password" id="su-pass"
+              class="field-input" placeholder="Create a password (min 6 chars)"
+              autocomplete="new-password"
+              oninput="suCheckStrength()"
+              onkeyup="checkCaps(event,'su-caps')" required>
+            <button type="button" class="eye-btn" onclick="toggleEye('su-pass','su-eye-open','su-eye-shut','su-timer','su-tbar','su-tcnt')">
+              <svg id="su-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="su-eye-shut" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="timer-bar" id="su-tbar"><div class="timer-fill" id="su-timer"></div></div>
+          <div class="timer-text" id="su-tcnt"></div>
+          <!-- Strength meter -->
+          <div class="strength-row" id="su-str-row">
+            <div class="strength-segs">
+              <div class="seg" id="s1"></div>
+              <div class="seg" id="s2"></div>
+              <div class="seg" id="s3"></div>
+              <div class="seg" id="s4"></div>
+            </div>
+            <div class="strength-lbl" id="su-str-lbl" style="color:var(--m)">—</div>
+          </div>
+          <!-- Rules -->
+          <div class="pw-rules" id="su-rules">
+            <div class="rule" id="r-len"><div class="rule-dot"></div>At least 6 characters</div>
+            <div class="rule" id="r-upper"><div class="rule-dot"></div>One uppercase letter (optional)</div>
+            <div class="rule" id="r-num"><div class="rule-dot"></div>One number (optional)</div>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="field">
+          <div class="field-top">
+            <label class="field-label">Confirm Password</label>
+            <span class="field-hint" id="su-matchHint" style="display:none">✓ Matches</span>
+          </div>
+          <div class="input-wrap">
+            <input type="password" name="confirm_password" id="su-confirm"
+              class="field-input" placeholder="Re-enter password"
+              autocomplete="new-password"
+              oninput="suCheckMatch()" required>
+            <button type="button" class="eye-btn" onclick="toggleEye('su-confirm','su-ceye-open','su-ceye-shut',null,null,null)">
+              <svg id="su-ceye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="su-ceye-shut" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="su-btn">
+          <div class="btn-inner">
+            <div class="spin" id="su-spin"></div>
+            <span id="su-btxt">Create My Account →</span>
+          </div>
+        </button>
+      </form>
+
+      <div style="margin-top:14px;text-align:center">
+        <span style="font-size:11px;color:var(--m)">Already have an account?</span>
+        <span style="font-size:11px;color:var(--ac);cursor:pointer;margin-left:4px" onclick="switchTab('signin')">Sign In →</span>
+      </div>
+    </div><!-- /signup panel -->
+
+    <!-- Security bar at bottom -->
+    <div class="security-bar">
+      <div class="sb-item"><div class="sb-dot ok"></div>SHA-256 Encrypted</div>
+      <div class="sb-sep"></div>
+      <div class="sb-item"><div class="sb-dot ac"></div>Private History</div>
+      <div class="sb-sep"></div>
+      <div class="sb-item"><div class="sb-dot ac2"></div>Session: 8h</div>
+      <div class="sb-sep"></div>
+      <div class="sb-item"><div class="sb-dot ok"></div>Any ID Allowed</div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /container -->
+
+<script>
+// ══ TAB SWITCHING ════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  // Focus first input
+  const first = document.querySelector('#panel-' + tab + ' .field-input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+// ══ EYE / PASSWORD VISIBILITY ════════════════════════
+const eyeTimers = {};
+
+function toggleEye(inputId, openId, shutId, fillId, barId, countId) {
+  const inp  = document.getElementById(inputId);
+  const open = document.getElementById(openId);
+  const shut = document.getElementById(shutId);
+
+  if (inp.type === 'text') {
+    // Hide immediately
+    inp.type = 'password';
+    open.style.display = 'block';
+    shut.style.display = 'none';
+    if (barId)   document.getElementById(barId).style.display = 'none';
+    if (countId) { document.getElementById(countId).style.display = 'none'; }
+    clearInterval(eyeTimers[inputId]);
+    return;
+  }
+
+  // Show password
+  inp.type = 'text';
+  open.style.display = 'none';
+  shut.style.display = 'block';
+
+  // Start 5s countdown
+  if (!fillId || !barId || !countId) return;
+  const bar   = document.getElementById(barId);
+  const fill  = document.getElementById(fillId);
+  const count = document.getElementById(countId);
+
+  bar.style.display = 'block';
+  count.style.display = 'block';
+
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  requestAnimationFrame(() => {
+    fill.style.transition = 'width 5s linear';
+    fill.style.width = '0%';
+  });
+
+  let secs = 5;
+  count.textContent = `👁 Visible for ${secs}s — click again to hide`;
+
+  clearInterval(eyeTimers[inputId]);
+  eyeTimers[inputId] = setInterval(() => {
+    secs--;
+    if (secs <= 0) {
+      clearInterval(eyeTimers[inputId]);
+      // Auto-hide
+      inp.type = 'password';
+      open.style.display = 'block';
+      shut.style.display = 'none';
+      bar.style.display = 'none';
+      count.style.display = 'none';
+    } else {
+      count.textContent = `👁 Visible for ${secs}s — click again to hide`;
+    }
+  }, 1000);
+}
+
+// ══ CAPS LOCK ═════════════════════════════════════════
+function checkCaps(e, hintId) {
+  const hint = document.getElementById(hintId);
+  if (!hint) return;
+  hint.style.display = (e.getModifierState && e.getModifierState('CapsLock')) ? 'block' : 'none';
+}
+
+// ══ SIGN IN VALIDATION ════════════════════════════════
+function siValidateUser() {
+  const inp  = document.getElementById('si-user');
+  const hint = document.getElementById('si-uHint');
+  if (inp.value.length >= 2) {
+    inp.classList.add('ok'); inp.classList.remove('err');
+    hint.style.display = 'inline';
+  } else {
+    inp.classList.remove('ok', 'err');
+    hint.style.display = 'none';
+  }
+}
+
+function siValidatePass() {
+  const inp = document.getElementById('si-pass');
+  if (inp.value.length >= 4) {
+    inp.classList.add('ok'); inp.classList.remove('err');
+  } else if (inp.value.length > 0) {
+    inp.classList.remove('ok', 'err');
+  }
+}
+
+// ══ SIGN UP VALIDATION ════════════════════════════════
+function suValidateUser() {
+  const inp  = document.getElementById('su-user');
+  const hint = document.getElementById('su-uHint');
+  if (inp.value.length >= 3) {
+    inp.classList.add('ok'); inp.classList.remove('err');
+    hint.style.display = 'inline';
+  } else if (inp.value.length > 0) {
+    inp.classList.add('err'); inp.classList.remove('ok');
+    hint.style.display = 'none';
+  } else {
+    inp.classList.remove('ok', 'err');
+    hint.style.display = 'none';
+  }
+}
+
+function suCheckStrength() {
+  const pw    = document.getElementById('su-pass').value;
+  const row   = document.getElementById('su-str-row');
+  const rules = document.getElementById('su-rules');
+  const lbl   = document.getElementById('su-str-lbl');
+  const inp   = document.getElementById('su-pass');
+  const segs  = ['s1','s2','s3','s4'].map(id => document.getElementById(id));
+
+  if (!pw) {
+    row.style.display = 'none';
+    rules.classList.remove('show');
+    inp.classList.remove('ok','err');
+    return;
+  }
+
+  row.style.display = 'flex';
+  rules.classList.add('show');
+
+  // Check rules
+  const hasLen   = pw.length >= 6;
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasNum   = /[0-9]/.test(pw);
+  const hasSpec  = /[^a-zA-Z0-9]/.test(pw);
+
+  setRule('r-len',   hasLen);
+  setRule('r-upper', hasUpper);
+  setRule('r-num',   hasNum);
+
+  // Strength score
+  let score = 0;
+  if (hasLen)   score++;
+  if (hasUpper) score++;
+  if (hasNum)   score++;
+  if (hasSpec || pw.length >= 10) score++;
+
+  const colors  = [null,'var(--err)','var(--warn)','var(--ac)','var(--ok)'];
+  const labels  = ['','Weak','Fair','Good','Strong'];
+  const lblColors = ['','#ff9aac','var(--warn)','var(--ac)','var(--ok)'];
+
+  segs.forEach((seg, i) => {
+    seg.style.background = i < score ? colors[score] : 'var(--dim)';
+  });
+  lbl.textContent  = labels[score] || '—';
+  lbl.style.color  = lblColors[score] || 'var(--m)';
+
+  if (score >= 1) {
+    inp.classList.add('ok'); inp.classList.remove('err');
+  } else {
+    inp.classList.remove('ok');
+  }
+
+  suCheckMatch();
+}
+
+function setRule(id, pass) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'rule ' + (pass ? 'pass' : 'fail');
+}
+
+function suCheckMatch() {
+  const pw1  = document.getElementById('su-pass').value;
+  const pw2  = document.getElementById('su-confirm').value;
+  const inp  = document.getElementById('su-confirm');
+  const hint = document.getElementById('su-matchHint');
+  if (!pw2) {
+    inp.classList.remove('ok','err');
+    hint.style.display = 'none';
+    return;
+  }
+  if (pw1 === pw2) {
+    inp.classList.add('ok'); inp.classList.remove('err');
+    hint.style.display = 'inline';
+  } else {
+    inp.classList.add('err'); inp.classList.remove('ok');
+    hint.style.display = 'none';
+  }
+}
+
+// ══ FORM SUBMIT ═══════════════════════════════════════
+function submitForm(type) {
+  if (type === 'signup') {
+    const pw1 = document.getElementById('su-pass').value;
+    const pw2 = document.getElementById('su-confirm').value;
+    if (pw1 !== pw2) {
+      showInlineError('Passwords do not match');
+      return false;
+    }
+    if (document.getElementById('su-user').value.length < 3) {
+      showInlineError('Username must be at least 3 characters');
+      return false;
+    }
+  }
+  const prefix = type === 'signin' ? 'si' : 'su';
+  const btn    = document.getElementById(prefix + '-btn');
+  const spin   = document.getElementById(prefix + '-spin');
+  const txt    = document.getElementById(prefix + '-btxt');
+  btn.disabled = true;
+  spin.style.display = 'block';
+  txt.textContent    = type === 'signin' ? 'Signing in…' : 'Creating account…';
+  return true;
+}
+
+function showInlineError(msg) {
+  // Remove existing
+  document.querySelectorAll('.inline-err').forEach(e => e.remove());
+  const div = document.createElement('div');
+  div.className = 'alert error inline-err';
+  div.innerHTML = `<div class="alert-icon">⚠</div><div>${msg}</div>`;
+  document.getElementById('signupForm').prepend(div);
+}
+
+// ══ CREDENTIALS QUICK-FILL ════════════════════════════
+function toggleCreds(prefix) {
+  const list  = document.getElementById(prefix + '-creds-list');
+  const arrow = document.getElementById(prefix + '-creds-arrow');
+  const open  = list.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+  arrow.textContent = open ? '▲' : '▼';
+}
+
+function fillCreds(prefix, username, password) {
+  const uInp = document.getElementById(prefix + '-user');
+  const pInp = document.getElementById(prefix + '-pass');
+
+  uInp.value = ''; pInp.value = '';
+  uInp.classList.remove('ok','err');
+  pInp.classList.remove('ok','err');
+
+  let i = 0;
+  const typeU = setInterval(() => {
+    if (i < username.length) {
+      uInp.value += username[i++];
+    } else {
+      clearInterval(typeU);
+      if (prefix === 'si') siValidateUser();
+      else suValidateUser();
+      let j = 0;
+      const typeP = setInterval(() => {
+        if (j < password.length) {
+          pInp.value += password[j++];
+        } else {
+          clearInterval(typeP);
+          if (prefix === 'si') siValidatePass();
+          else suCheckStrength();
+        }
+      }, 35);
+    }
+  }, 45);
+}
+
+// ══ KEYBOARD SHORTCUTS ═══════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const activePanel = document.querySelector('.form-panel.active');
+    const btn = activePanel ? activePanel.querySelector('.submit-btn') : null;
+    if (btn && !btn.disabled) btn.click();
+  }
+});
+
+// ══ AUTO FOCUS & URL PARAM CHECK ══════════════════════
+window.addEventListener('load', () => {
+  // Check if ?tab=signup in URL
+  if (location.search.includes('signup')) switchTab('signup');
+  const first = document.querySelector('#panel-signin .field-input');
+  if (first) first.focus();
+});
+</script>
+</body>
+</html>
